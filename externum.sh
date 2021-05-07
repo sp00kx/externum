@@ -6,49 +6,53 @@
 clear
 read -p "Enter the name of the job folder (e.g. client_ext_data) : " mainfolder
 
-if [ ! -d "$mainfolder" ]; then
-    mkdir ~/$mainfolder
+if [ ! -d "./$mainfolder" ]; then
+    mkdir $mainfolder
 fi
 
-cd ~/$mainfolder
-if [ ! -d "nmap" ]; then
+cd $mainfolder
+if [ ! -d "./nmap" ]; then
     mkdir nmap
 fi
 
-if [ ! -d "enum" ]; then
+if [ ! -d "./enum" ]; then
     mkdir enum
 fi
 
-if [ ! -d "enum/dns" ]; then
+if [ ! -d "./enum/dns" ]; then
     mkdir enum/dns
 fi
 
-if [ ! -d "enum/screenshots" ]; then
+if [ ! -d "./enum/screenshots" ]; then
     mkdir enum/screenshots
 fi
 
-if [ ! -d "nikto" ]; then
+if [ ! -d "./nikto" ]; then
     mkdir nikto
 fi
 
-if [ ! -d "enum/directories" ]; then
+if [ ! -d "./enum/directories" ]; then
     mkdir enum/directories
 fi
 
-if [ ! -d "automated" ]; then
+if [ ! -d "./automated" ]; then
     mkdir automated
 fi
 echo "all job folders created"
 
 # creates a targets file
-cd ~/$mainfolder
 read -p "A targets file will now be created. Press enter to add IP's to scope" null
 nano targets.txt
 
 # find hostnames associated to IP's
-cd nmap
 echo "Finding hostnames associated to IP's"
-for line in $(cat ../targets.txt); do echo $line" - "$(dig -x $line +short) >> ../enum/dns/ips_resolved.txt; done
+for line in $(cat targets.txt);
+do echo $line" - "$(dig -x $line +short) >> enum/dns/ips_resolved.txt
+    $(cat enum/dns/ips_resolved.txt) | cut -d " " -f 3 | grep -Po "(\w+\.\w+\.)$" | cut -d "." -f 1,2 | tee enum/dns/tlds.txt;
+done
+
+# go out and enumerate subdomains to associated IP and then compare against inscope IP's
+
 wait
 
 # run nmap against hosts (need to multi-process this)
