@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 
-#externum v0.1
+#externum v0.2
+
+
+ipinfo="https://ipinfo.io"
+
 
 # create and name a master folder
 clear
@@ -29,10 +33,14 @@ nano targets.txt
 echo ""
 echo "Finding hostnames associated to IP's"
 echo ""
-echo "Hostnames Discovered"
-    cat enum/dns/resolved_tlds.txt
+echo "Hostnames Discovered:"
+    
+for ip in $(cat targets.txt) ; do
+    ip_info=$(curl -s $ipinfo/$ip/hostname)
+        echo $ip_info | cut -d "." -f 2-4 >> enum/dns/resolved_tlds.txt;
+done
+cat enum/dns/resolved_tlds.txt
 
-for line in $(cat targets.txt); do echo $line" - "$(dig -x $line +short) | cut -d " " -f 3 | grep -Po "(\w+\.\w+\.)$" | cut -d "." -f 1,2  >> enum/dns/resolved_tlds.txt; done
 
 # go out and enumerate subdomains to associated IP and then compare against inscope IP's
 echo ""
