@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-#Externum v0.2
+#Externum DEV v0.4
 
 #Defined Variables
 ipinfo="https://ipinfo.io"
@@ -38,14 +38,12 @@ cd "$mainfolder" || exit
     mkdir enum
     mkdir enum/dns
     mkdir enum/screenshots
-    mkdir nikto
+    mkdir enum/nikto
     mkdir enum/directories
-    mkdir automated
-
 echo
 
 # creates a targets file
-read -p "A targets file will now be created. Press enter to add IP's to scope" null
+read -r -p "A targets file will now be created. Press enter to add IP's to scope " null
 nano targets.txt
 
 # find hostnames associated to IP's
@@ -56,20 +54,20 @@ echo "Hostnames Discovered:"
     
 for ip in $(cat targets.txt) ; do
     ip_info=$(curl -s $ipinfo/"$ip"/hostname)
-        echo "$ip_info" | cut -d "." -f 2-4 >> enum/dns/resolved_tlds.txt;
+        echo "$ip_info" | cut -d "." -f 2-4 | sort -u >> enum/dns/resolved_tlds.txt;
 done
 cat enum/dns/resolved_tlds.txt
 
-#stop check to access if hostnames look correct.
-echo
-while true; do
-    read -p "Do the hostnames look correct (Y/N): " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
+#stop check to access if hostnames look correct - left out in Dev v0.3 as not sure its needed
+#echo
+#while true; do
+#    read -r -p "Do the hostnames look correct (Y/N): " yn
+#    case $yn in
+#        [Yy]* ) break;;
+#        [Nn]* ) nano enum/dns/resolved_tlds.txt;;
+#        * ) echo "Please answer yes or no.";;
+#    esac
+#done
 
 # go out and enumerate subdomains to associated IP and then compare against inscope IP's
 echo
@@ -83,26 +81,29 @@ done
 echo
 echo "Number of subdomains found:"; wc -l < enum/dns/enumerated_subdomains.txt
 
-# run nmap against hosts (need to multi-process this consider rush)
+
+# looking for quick win webservers
 echo
-echo "All OSINT is complete, now starting NMAP TCP/UDP against target IP's"
+echo "Looking for open services, please be patient"
+sudo naabu -p - -iL targets.txt -silent -o potentialwebservers.txt > /dev/null 2>&1
 echo
-echo "--TCP--"
-for i in $(cat ../targets.txt)
-do
-    nmap -Pn -sSVC "$i" --top-ports 10000 -oN "$i"_tcp
-done
+echo "Number of open services found:"; wc -l < potentialwebservers.txt
+echo
+echo "Probing services for active webservers"
+cat potentialwebservers.txt | httprobe >> webservers.txt
 
-echo "--UDP--"
-for i in $(cat ../targets.txt)
-do
-    nmap -Pn -sSUV "$i" --top-ports 200 -oN "$i"_udp 
-done
-wait
 
-# format results from nmap scans
-echo "cleaning nmap results"
-grep -Hari "/tcp" | cut -d "/" -f 1 >> allservices.txt
-grep -Hari "/udp" | cut -d "/" -f 1 >> allservices.txt
 
-#httpprobe services for potential webservers - output webservers.txt
+
+
+# run nmap against hosts
+#echo
+#echo "All OSINT is complete, now starting NMAP TCP/UDP against target IP's"
+#echo
+#cd nmap/
+#echo "--Scanning TCP in parallel, please be patient--"
+#sudo rush "nmap -Pn -sSVC --top-ports 10000 {} -oN {}" -i ../targets.txt -j 5 > /dev/null 2>&1
+
+
+#echo "--Scanning UDP 200 top ports, please be patiet--"
+#sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN {}" -i ../targets.txt -j 3
