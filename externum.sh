@@ -62,8 +62,8 @@ while getopts "h:t:w:o" selection; do
 		    o) osint=true;;
             t) target_file=${OPTARG};;
             w) wordlist=${OPTARG};;
-	    	h) banner; usage; exit;;
-	    	*) banner; usage; exit;;
+            h) banner; usage; exit;;
+            *) banner; usage; exit;;
  	esac
 done
 
