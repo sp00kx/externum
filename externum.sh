@@ -1,16 +1,17 @@
 #!/bin/bash
 
-#Externum DEV v0.5
+#Externum DEV v0.6
 
-#Defined Variables
+#Global defined variables
 ipinfo="https://ipinfo.io"
 
-#Colours
+# Colours
+red="\e[31m"
 blue="\e[34m"
 green="\e[32;5;48m"
 colouroff="\e[0m"
 
-#functions
+# Opening functions
 banner () {
     clear
     echo -e "$green"   
@@ -40,7 +41,7 @@ usage () {
     echo
     echo " -t   Path to targets file (Required)"
     echo " -w   Path to wordslist for directory enumeration (Required)"
-    echo " -o   Enables OSINT (Looks for hostnames / enumerates subdomains)"
+    echo " -o   Enables OSINT plugin that looks for hostnames & enumerates subdomains (Optional)"
     echo " -h   Show this usage message"
     echo
     echo "example: sudo ./externum.sh -o -t <target.txt> -w <wordlist.txt>"
@@ -56,89 +57,109 @@ if [ $# -eq 0 ]; then
     usage
 fi
 
-while getopts "t:w:h" selection; do
+while getopts "h:t:w:o" selection; do
 	case "${selection}" in
-		    t) target_file=${OPTARG};;
+		    o) osint=true;;
+            t) target_file=${OPTARG};;
             w) wordlist=${OPTARG};;
-            o) osint=${OPTARG};;
 	    	h) banner; usage; exit;;
 	    	*) banner; usage; exit;;
  	esac
 done
 
 
-
 # Create master folder and subfolders
 echo
 read -r -p 'Enter the name of the job folder (e.g. client_ext_data) : ' mainfolder
 
-if [ ! -d ./$mainfolder ]; then
-    mkdir $mainfolder
-    mkdir $mainfolder/nmap
-    mkdir $mainfolder/enum
-    mkdir $mainfolder/enum/dns
-    mkdir $mainfolder/enum/screenshots
-    mkdir $mainfolder/enum/nikto
-    mkdir $mainfolder/enum/directories
+if [ ! -d ./"$mainfolder" ]; then
+    mkdir "$mainfolder"
+    mkdir "$mainfolder"/nmap
+    mkdir "$mainfolder"/enum
+    mkdir "$mainfolder"/enum/dns
+    mkdir "$mainfolder"/enum/screenshots
+    mkdir "$mainfolder"/enum/nikto
+    mkdir "$mainfolder"/enum/directories
 fi
-
-# Copy users target file to main job folders
 usr_file_path=$( realpath "$target_file" )
 cp "$usr_file_path" "$mainfolder"/
+sleep 1
+
+# OSINT FUNCTION
+osint_enum() {
+    # find hostnames associated to IP's
+    echo 
+    echo -e "${blue}Hostnames associated to IP's:${colouroff}"
+    for ip in $(cat "$mainfolder"/targets.txt) ; do
+        ip_info=$(curl -s $ipinfo/"$ip"/hostname)
+            echo "$ip_info" | cut -d "." -f 2-4 | sort -u >> "$mainfolder"/enum/dns/resolved_tlds.txt;
+    done
+    cat "$mainfolder"/enum/dns/resolved_tlds.txt
+
+    # Enumerate subdomains to associated IPs and store for manual analysis
+    echo
+    echo -e "${blue}Looking for all associated subdomains to target, please be patient this may take a little while${colouroff}"
+    
+    # check is amass is installed
+    if ! command -v amass &>/dev/null; then
+        banner
+        echo -e ${red}"Badtimes! You need Amass installed for Externum to work"${colouroff}
+        exit
+    else
+        for line in $(cat "$mainfolder"/enum/dns/resolved_tlds.txt);
+            do  amass enum -ipv4 -silent -o "$mainfolder"/enum/dns/enumerated_subdomains.txt -d "$line";
+        done
+    fi
+    # Add in a wc result for how many subdomains enumerated
+    echo
+    echo -e "$blue"Number of subdomains found:"$colouroff"; wc -l < "$mainfolder"/enum/dns/enumerated_subdomains.txt
+}
+#END OF OSINT FUNCTION
 
 
-
-# OSINT FUNCTION HERE
-
-
-# find hostnames associated to IP's
-echo 
-echo -e "${blue}Hostnames associated to IP's:${colouroff}"
-
-for ip in $target_file ; do
-    ip_info=$(curl -s $ipinfo/"$ip"/hostname)
-        echo "$ip_info" | cut -d "." -f 2-4 | sort -u >> enum/dns/resolved_tlds.txt;
-done
-cat enum/dns/resolved_tlds.txt
-
-# Enumerate subdomains to associated IPs and store for manual analysis
-echo
-echo -e "${blue}Looking for all associated subdomains to target, please be patient this may take a little while${colouroff}"
-
-for line in $(cat enum/dns/resolved_tlds.txt);
-    do  amass enum -ipv4 -silent -o enum/dns/enumerated_subdomains.txt -d "$line";
-done
-
-# Add in a wc result for how many subdomains enumerated
-echo
-echo -e "$blue"Number of subdomains found:"$colouroff"; wc -l < enum/dns/enumerated_subdomains.txt
-
-#END OF OSINT FUNCTION HERE
+quickenum() {
+    # looking for quick win webservers
+    echo
+    echo -e "${blue}Looking for common open services, please be patient${colouroff}"
+    # check if Naabu is installed
+    if ! command -v naabu &>/dev/null; then
+        banner
+        echo -e ${red}"Badtimes! You need Naabo installed for Externum to work"${colouroff}
+        exit
+    else
+        naabu -p 80,443,8080,8443,8005,8009,8181,4848,9000,8008,9990,7001,9043,9060,9080,9443,1527,7777,4443 -iL "$mainfolder"/targets.txt -silent -o "$mainfolder"/enum/potentialwebservers.txt > /dev/null 2>&1
+    fi
+    echo
+    echo -e "${blue}Probing discovered services for active webservers${colouroff}"
+    cat "$mainfolder"/enum/potentialwebservers.txt | httprobe >> "$mainfolder"/enum/webservers.txt
+    echo
+    echo -e "${blue}Number of active webservers found:${colouroff}"; wc -l < "$mainfolder"/enum/webservers.txt
+    echo
+}
 
 
-
-# looking for quick win webservers
-echo
-echo -e "${blue}Looking for open services, please be patient${colouroff}"
-sudo naabu -p - -iL targets.txt -silent -o potentialwebservers.txt > /dev/null 2>&1
-echo
-echo -e "${blue} Number of open services found:${colouroff}"; wc -l < potentialwebservers.txt
-echo
-echo -e "${blue}Probing services for active webservers${colouroff}"
-cat potentialwebservers.txt | httprobe >> webservers.txt
+#nmap() {
+    # run nmap against hosts
+    #echo
+    #echo "All OSINT is complete, now starting NMAP TCP/UDP against target IP's"
+    #echo
+    #cd nmap/
+    #echo "--Scanning TCP in parallel, please be patient--"
+    #sudo rush "nmap -Pn -sSVC --top-ports 10000 {} -oN {}" -i ../targets.txt -j 5 > /dev/null 2>&1
 
 
+    #echo "--Scanning UDP 200 top ports, please be patiet--"
+    #sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN {}" -i ../targets.txt -j 3
 
+#}
 
-
-# run nmap against hosts
-#echo
-#echo "All OSINT is complete, now starting NMAP TCP/UDP against target IP's"
-#echo
-#cd nmap/
-#echo "--Scanning TCP in parallel, please be patient--"
-#sudo rush "nmap -Pn -sSVC --top-ports 10000 {} -oN {}" -i ../targets.txt -j 5 > /dev/null 2>&1
-
-
-#echo "--Scanning UDP 200 top ports, please be patiet--"
-#sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN {}" -i ../targets.txt -j 3
+# Main Menu
+if [ "$osint" == true ]; then
+    osint_enum
+    quickenum
+    #nmap
+else
+    banner
+    quickenum
+    #nmap
+fi
