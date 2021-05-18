@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Externum DEV v0.6
+#Externum DEV v0.7
 
 #Global defined variables
 ipinfo="https://ipinfo.io"
@@ -80,14 +80,15 @@ if [ ! -d ./"$mainfolder" ]; then
     mkdir "$mainfolder"/enum/screenshots
     mkdir "$mainfolder"/enum/nikto
     mkdir "$mainfolder"/enum/directories
+    touch "$mainfolder"/logfile.txt
 fi
 usr_file_path=$( realpath "$target_file" )
 cp "$usr_file_path" "$mainfolder"/
 sleep 1
 
-# OSINT FUNCTION
 osint_enum() {
     # find hostnames associated to IP's
+    echo "Time: $(date -Iseconds). osint started." >> "$mainfolder"/logfile.txt
     echo 
     echo -e "${blue}Hostnames associated to IP's:${colouroff}"
     for ip in $(cat "$mainfolder"/targets.txt) ; do
@@ -113,13 +114,15 @@ osint_enum() {
     # Add in a wc result for how many subdomains enumerated
     echo
     echo -e "$blue"Number of subdomains found:"$colouroff"; wc -l < "$mainfolder"/enum/dns/enumerated_subdomains.txt
+    echo "Time: $(date -Iseconds). osint completed." >> "$mainfolder"/logfile.txt
 }
-#END OF OSINT FUNCTION
+
 
 
 quickenum() {
     # looking for quick win webservers
     echo
+    echo "Time: $(date -Iseconds). common port enum started." >> "$mainfolder"/logfile.txt
     echo -e "${blue}Looking for common open services, please be patient${colouroff}"
     # check if Naabu is installed
     if ! command -v naabu &>/dev/null; then
@@ -129,12 +132,57 @@ quickenum() {
     else
         naabu -p 80,443,8080,8443,8005,8009,8181,4848,9000,8008,9990,7001,9043,9060,9080,9443,1527,7777,4443 -iL "$mainfolder"/targets.txt -silent -o "$mainfolder"/enum/potentialwebservers.txt > /dev/null 2>&1
     fi
+    echo "Time: $(date -Iseconds). common port enum completed." >> "$mainfolder"/logfile.txt
+   
+    #httprobe
     echo
+    echo "Time: $(date -Iseconds). probing for active webservers." >> "$mainfolder"/logfile.txt
     echo -e "${blue}Probing discovered services for active webservers${colouroff}"
     cat "$mainfolder"/enum/potentialwebservers.txt | httprobe >> "$mainfolder"/enum/webservers.txt
     echo
     echo -e "${blue}Number of active webservers found:${colouroff}"; wc -l < "$mainfolder"/enum/webservers.txt
+    echo "Time: $(date -Iseconds). webserver probe complete." >> "$mainfolder"/logfile.txt
+
+    #directory enum
     echo
+    echo "Time: $(date -Iseconds). starting directory bruteforce." >> "$mainfolder"/logfile.txt
+    echo -e "${blue}Busting some directories and looking for codes: ${colouroff}"
+    if ! command -v dirsearch &>/dev/null; then
+        banner
+        echo -e ${red}"Badtimes! You need Dirsearch installed for Externum to work"${colouroff}
+        exit
+    else
+        if [[ "$wordlist" == "" ]]; then
+            echo -e ${red}"Badtimes! You have forgotten to add the path to your wordlist"${colouroff}
+            exit
+        else
+            for line in $(cat "$mainfolder"/enum/webservers.txt); do
+               ffuf -u $line/FUZZ -H "User-Agent: Firefox" -w "$wordlist" -t 10 -mc 200,204,401,403,500,501,502 -recursion -recursion-depth 1 -s -of csv -o $mainfolder/enum/directories/$(echo $line | cut -d "/" -f 3).csv > /dev/null 2>&1
+            done
+        fi   
+    fi
+    echo "Time: $(date -Iseconds). directory busting complete." >> "$mainfolder"/logfile.txt
+    
+    #nikto
+    echo
+    echo "Time: $(date -Iseconds). starting nikto." >> "$mainfolder"/logfile.txt
+    echo -e "${blue}Scanning the webservers using Nikto: ${colouroff}"
+    if ! command -v nikto &>/dev/null; then
+        banner
+        echo -e ${red}"Badtimes! You need Nikto installed for Externum to work"${colouroff}
+        exit
+    else
+        for i in $(cat "$mainfolder"/enum/webservers.txt); do
+            nikto -ask no --maxtime 15m -host "$i" >> "$mainfolder"/enum/nikto/"$(echo "$i" | cut -d "/" -f 3)".txt
+        done   
+    fi
+    echo "Time: $(date -Iseconds). nikto complete." >> "$mainfolder"/logfile.txt
+
+    #Screenshots GoWitness
+    
+
+    #nuclei
+
 }
 
 
@@ -159,7 +207,6 @@ if [ "$osint" == true ]; then
     quickenum
     #nmap
 else
-    banner
     quickenum
     #nmap
 fi
