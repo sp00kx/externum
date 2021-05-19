@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Externum DEV v0.7
+#Externum DEV v0.8
 
 #Global defined variables
 ipinfo="https://ipinfo.io"
@@ -78,6 +78,7 @@ if [ ! -d ./"$mainfolder" ]; then
     mkdir "$mainfolder"/enum
     mkdir "$mainfolder"/enum/dns
     mkdir "$mainfolder"/enum/screenshots
+    mkdir "$mainfolder"/enum/screenshots/captures
     mkdir "$mainfolder"/enum/nikto
     mkdir "$mainfolder"/enum/directories
     touch "$mainfolder"/logfile.txt
@@ -99,7 +100,7 @@ osint_enum() {
 
     # Enumerate subdomains to associated IPs and store for manual analysis
     echo
-    echo -e "${blue}Looking for all associated subdomains to target, please be patient this may take a little while${colouroff}"
+    echo -e "${blue}Passively scanning for all associated subdomains to targets, please be patient this may take a little while${colouroff}"
     
     # check is amass is installed
     if ! command -v amass &>/dev/null; then
@@ -179,9 +180,20 @@ quickenum() {
     echo "Time: $(date -Iseconds). nikto complete." >> "$mainfolder"/logfile.txt
 
     #Screenshots GoWitness
-    
+    echo
+    echo "Time: $(date -Iseconds). starting gowitness screen capture." >> "$mainfolder"/logfile.txt
+    echo -e "${blue}Grabbing some screenprints, nearly finshed.${colouroff}"
+    if ! command -v gowitness &>/dev/null; then
+        banner
+        echo -e ${red}"Badtimes! You need GoWitness installed for Externum to work"${colouroff}
+        exit
+    else
+        gowitness file -f "$mainfolder"/enum/webservers.txt -t 10 --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0" -P "$mainfolder"/enum/screenshots/captures --db-path "$mainfolder"/enum/screenshots/captures.sqlite3 > /dev/null 2>&1
+    fi
+    echo "Time: $(date -Iseconds). gowitness complete." >> "$mainfolder"/logfile.txt
 
     #nuclei
+
 
 }
 
