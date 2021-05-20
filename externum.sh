@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Externum DEV v0.8
+#Externum DEV v0.9 - multithread Nikto / and nmap
 
 #Global defined variables
 ipinfo="https://ipinfo.io"
@@ -74,8 +74,10 @@ read -r -p 'Enter the name of the job folder (e.g. client_ext_data) : ' mainfold
 
 if [ ! -d ./"$mainfolder" ]; then
     mkdir "$mainfolder"
-    mkdir "$mainfolder"/nmap
     mkdir "$mainfolder"/enum
+    mkdir "$mainfolder"/enum/nmap
+    mkdir "$mainfolder"/enum/nmap/tcp
+    mkdir "$mainfolder"/enum/nmap/udp
     mkdir "$mainfolder"/enum/dns
     mkdir "$mainfolder"/enum/screenshots
     mkdir "$mainfolder"/enum/screenshots/captures
@@ -168,16 +170,21 @@ quickenum() {
     echo
     echo "Time: $(date -Iseconds). starting nikto." >> "$mainfolder"/logfile.txt
     echo -e "${blue}Scanning the webservers using Nikto: ${colouroff}"
-    if ! command -v nikto &>/dev/null; then
+    if ! command -v rush &>/dev/null; then
         banner
-        echo -e ${red}"Badtimes! You need Nikto installed for Externum to work"${colouroff}
+        echo -e ${red}"Badtimes! You need Rush installed for Externum to work"${colouroff}
         exit
     else
-        for i in $(cat "$mainfolder"/enum/webservers.txt); do
-            nikto -ask no --maxtime 15m -host "$i" >> "$mainfolder"/enum/nikto/"$(echo "$i" | cut -d "/" -f 3)".txt
-        done   
+        if ! command -v nikto &>/dev/null; then
+            banner
+            echo -e ${red}"Badtimes! You need Nikto installed for Externum to work"${colouroff}
+            exit
+        else #Running nikto multi threaded using rush
+            rush "nikto --ask no --maxtime 15m -host {} -Format html -o "$mainfolder"/enum/nikto/AllResults.html" -i "$mainfolder"/enum/webservers.txt -j 10
+        fi
+        echo "Time: $(date -Iseconds). nikto complete." >> "$mainfolder"/logfile.txt
     fi
-    echo "Time: $(date -Iseconds). nikto complete." >> "$mainfolder"/logfile.txt
+    
 
     #Screenshots GoWitness
     echo
@@ -198,27 +205,47 @@ quickenum() {
 }
 
 
-#nmap() {
+nmap() {
+    echo
+    echo -e ${red}
+    echo "All quick enumeration has now finshed, you should have some juicy info to go and check."
+    echo
+    echo "In the meantime Externum will begin the nmap TCP all port, and UDP Top 200 scan which"
+    echo "may take sometime, we will not be running scripts but are multi threading the scans"
+    echo "so will be as quick as possible."
+    echo
+    echo "Why dont you go grab a coffee"
+    echo -e ${colouroff}
+
+
     # run nmap against hosts
-    #echo
-    #echo "All OSINT is complete, now starting NMAP TCP/UDP against target IP's"
-    #echo
-    #cd nmap/
-    #echo "--Scanning TCP in parallel, please be patient--"
-    #sudo rush "nmap -Pn -sSVC --top-ports 10000 {} -oN {}" -i ../targets.txt -j 5 > /dev/null 2>&1
+    echo
+    echo -e ${blue}
+    echo "Dont forget you will need to be root for this section, you will be prompted for the password next"
+    echo
+    echo "Time: $(date -Iseconds). starting nmap TCP all ports." >> "$mainfolder"/logfile.txt
+    echo "Starting NMAP TCP/UDP against target IP's"
+    echo -e ${colouroff}
 
+    sudo rush "nmap -Pn -sSV -T4 -p- {} -oN "$mainfolder"/enum/nmap/tcp/{}" -i "$mainfolder"/targets.txt -j 5 > /dev/null 2>&1
+    
+    echo "Time: $(date -Iseconds). completed nmap TCP all ports." >> "$mainfolder"/logfile.txt
 
-    #echo "--Scanning UDP 200 top ports, please be patiet--"
-    #sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN {}" -i ../targets.txt -j 3
+    echo "Time: $(date -Iseconds). starting nmap UDP top 200 ports." >> "$mainfolder"/logfile.txt
+    echo -e ${blue}"Starting NMAP UDP against target IP's${colouroff}"
+    
+    sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN "$mainfolder"/enum/nmap/udp/{}" -i "$mainfolder"/targets.txt -j 5 > /dev/null 2>&1
+    
+    echo "Time: $(date -Iseconds). completed nmap UDP top 200 ports." >> "$mainfolder"/logfile.txt
 
-#}
+}
 
 # Main Menu
 if [ "$osint" == true ]; then
     osint_enum
     quickenum
-    #nmap
+    nmap
 else
     quickenum
-    #nmap
+    nmap
 fi
