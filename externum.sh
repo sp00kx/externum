@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#Externum DEV v0.9 - multithread Nikto / and nmap
-
 #Global defined variables
 ipinfo="https://ipinfo.io"
 
@@ -47,6 +45,21 @@ usage () {
     echo "example: sudo ./externum.sh -o -t <target.txt> -w <wordlist.txt>"
     echo
     exit
+}
+
+spinner () {
+    pid=$! # Process Id of the previous running command
+
+    spin='-\|/'
+
+    i=0
+    while kill -0 $pid 2>/dev/null
+    do
+    i=$(( (i+1) %4 ))
+    printf "\r${spin:$i:1} - Working"
+    sleep .1
+    done
+    echo -e "\nDone!"
 }
 
 banner
@@ -102,7 +115,7 @@ osint_enum() {
 
     # Enumerate subdomains to associated IPs and store for manual analysis
     echo
-    echo -e "${blue}Passively scanning for all associated subdomains to targets, please be patient this may take a little while${colouroff}"
+    echo -e "${blue}Looking for all associated subdomains to targets, please be patient this may take a little while${colouroff}"
     
     # check is amass is installed
     if ! command -v amass &>/dev/null; then
@@ -111,7 +124,8 @@ osint_enum() {
         exit
     else
         for line in $(cat "$mainfolder"/enum/dns/resolved_tlds.txt);
-            do  amass enum -ipv4 -silent -o "$mainfolder"/enum/dns/enumerated_subdomains.txt -d "$line";
+            do  amass enum -ipv4 -silent -o "$mainfolder"/enum/dns/enumerated_subdomains.txt -d "$line" &
+            spinner
         done
     fi
     # Add in a wc result for how many subdomains enumerated
@@ -133,7 +147,8 @@ quickenum() {
         echo -e ${red}"Badtimes! You need Naabo installed for Externum to work"${colouroff}
         exit
     else
-        naabu -p 80,443,8080,8443,8005,8009,8181,4848,9000,8008,9990,7001,9043,9060,9080,9443,1527,7777,4443 -iL "$mainfolder"/targets.txt -silent -o "$mainfolder"/enum/potentialwebservers.txt > /dev/null 2>&1
+        naabu -p 80,443,8080,8443,8005,8009,8181,4848,9000,8008,9990,7001,9043,9060,9080,9443,1527,7777,4443 -iL "$mainfolder"/targets.txt -silent -o "$mainfolder"/enum/potentialwebservers.txt > /dev/null 2>&1 &
+        spinner
     fi
     echo "Time: $(date -Iseconds). common port enum completed." >> "$mainfolder"/logfile.txt
    
@@ -160,7 +175,8 @@ quickenum() {
             exit
         else
             for line in $(cat "$mainfolder"/enum/webservers.txt); do
-               ffuf -u $line/FUZZ -H "User-Agent: Firefox" -w "$wordlist" -t 10 -mc 200,204,401,403,500,501,502 -recursion -recursion-depth 1 -s -of csv -o $mainfolder/enum/directories/$(echo $line | cut -d "/" -f 3).csv > /dev/null 2>&1
+               ffuf -u $line/FUZZ -H "User-Agent: Firefox" -w "$wordlist" -t 10 -mc 200,204,401,403,500,501,502 -recursion -recursion-depth 1 -s -of csv -o $mainfolder/enum/directories/$(echo $line | cut -d "/" -f 3).csv > /dev/null 2>&1 &
+               spinner
             done
         fi   
     fi
@@ -180,7 +196,8 @@ quickenum() {
             echo -e ${red}"Badtimes! You need Nikto installed for Externum to work"${colouroff}
             exit
         else #Running nikto multi threaded using rush
-            rush "nikto --ask no --maxtime 15m -host {} -Format html -o "$mainfolder"/enum/nikto/AllResults.html" -i "$mainfolder"/enum/webservers.txt -j 10
+            rush "nikto --ask no --maxtime 15m -host {} -Format html -o "$mainfolder"/enum/nikto/AllResults.html" -i "$mainfolder"/enum/webservers.txt -j 10 &
+            spinner
         fi
         echo "Time: $(date -Iseconds). nikto complete." >> "$mainfolder"/logfile.txt
     fi
@@ -195,12 +212,10 @@ quickenum() {
         echo -e ${red}"Badtimes! You need GoWitness installed for Externum to work"${colouroff}
         exit
     else
-        gowitness file -f "$mainfolder"/enum/webservers.txt -t 10 --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0" -P "$mainfolder"/enum/screenshots/captures --db-path "$mainfolder"/enum/screenshots/captures.sqlite3 > /dev/null 2>&1
+        gowitness file -f "$mainfolder"/enum/webservers.txt -t 10 --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0" -P "$mainfolder"/enum/screenshots/captures --db-path "$mainfolder"/enum/screenshots/captures.sqlite3 > /dev/null 2>&1 &
+        spinner
     fi
     echo "Time: $(date -Iseconds). gowitness complete." >> "$mainfolder"/logfile.txt
-
-    #nuclei
-
 
 }
 
