@@ -242,14 +242,16 @@ nmap() {
     echo "Starting NMAP TCP/UDP against target IP's"
     echo -e ${colouroff}
 
-    sudo rush "nmap -Pn -sSV -T4 -p- {} -oN "$mainfolder"/enum/nmap/tcp/{}" -i "$mainfolder"/targets.txt -j 5 > /dev/null 2>&1
+    sudo rush "nmap -Pn -sSV -T4 -p- {} -oN "$mainfolder"/enum/nmap/tcp/{}" -i "$mainfolder"/targets.txt -j 5 > /dev/null 2>&1 &
+    spinner
     
     echo "Time: $(date -Iseconds). completed nmap TCP all ports." >> "$mainfolder"/logfile.txt
 
     echo "Time: $(date -Iseconds). starting nmap UDP top 200 ports." >> "$mainfolder"/logfile.txt
     echo -e ${blue}"Starting NMAP UDP against target IP's${colouroff}"
     
-    sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN "$mainfolder"/enum/nmap/udp/{}" -i "$mainfolder"/targets.txt -j 5 > /dev/null 2>&1
+    sudo rush "nmap -Pn -sUV --top-ports 200 {} -oN "$mainfolder"/enum/nmap/udp/{}" -i "$mainfolder"/targets.txt -j 5 > /dev/null 2>&1 &
+    spinner
     
     echo "Time: $(date -Iseconds). completed nmap UDP top 200 ports." >> "$mainfolder"/logfile.txt
 
