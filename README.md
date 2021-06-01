@@ -15,6 +15,8 @@ To coin a phrase from the film Full Metal Jacket: "This is my program. There are
 
 It is not perfect, and I will be making many improvements and additions to it over the coming months/years, but I hope that it helps someone, somewhere.
 
+I have designed Externum with speed in mind, the idea is that information is enumerated quickly before the more time consuming nmap scans start. This should give you an idea of any low hanging fruit on the infrastructure that you can look into whilst the full scans run their course.
+
 ### Requirements:
 -----------------
 Externum requires a few packages to be installed on your system in order to work. I am not going to give instructions on how to install each one as there are very comprehensive instructions on each makers github wiki page.
