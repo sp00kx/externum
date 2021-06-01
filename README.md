@@ -1,6 +1,6 @@
 # EXTERNUM
 
-A framework written in Bash that is designed to help automate and increase efficiency when conducting external penetration tests.
+A framework written in Bash designed to help automate and increase efficiency when conducting external penetration tests.
 
 
 # Screenshots:
