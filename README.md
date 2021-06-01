@@ -5,7 +5,7 @@ A framework written in Bash that is designed to help automate and increase effic
 
 # Screenshots:
 --------------
-![Screenshot_2021-06-01_13-42-12](https://user-images.githubusercontent.com/75701798/120325647-c5fb2c00-c2df-11eb-9cae-cd5b02b4f57c.png)
+![externum-capture](https://user-images.githubusercontent.com/75701798/120340571-111c3b80-c2ee-11eb-8095-a4c59377b26b.PNG)
 
 # Information:
 -------------
