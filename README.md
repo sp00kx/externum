@@ -38,18 +38,18 @@ Externum requires a few packages to be installed on your system in order to work
 
 Externum has three positional arguments as follows:
 
-    | Argument | Status | Description |
-    |:---------|:-------|:------------|
-    |   -o     | OPTIONAL || Enables the OSINT recon section of the framework. All IP's will be checked against the ipinfo.io api returning associated hostnames. These hostnames will then be sent to amass where all subdomains will be enumerated. |
-    |   -t     | REQUIRED ||Path to your target file that contains a list of IP's (One per line) |
-    |   -w     | REQUIRED ||Path to your chosen wordlist | 
+    | Argument | Status    | Description |
+    |:---------|:----------|:------------|
+    |   -o     | OPTIONAL  | Enables the OSINT recon section of the framework. All IP's will be checked against the ipinfo.io api returning associated hostnames. These hostnames will then be sent to amass where all subdomains will be enumerated. |
+    |   -t     | REQUIRED  | Path to your target file that contains a list of IP's (One per line) |
+    |   -w     | REQUIRED  | Path to your chosen wordlist | 
 
 **NOTE: The nmap scans will require root privileges so it's best to run Externum elevated from the start, although you will be prompted if you forget.
 
 Example:
-'''bash
+```bash
 sudo ./externum.sh -o -t <PATH TO TARGET FILE> -w <PATH TO WORDLIST>
-'''
+```
 
 I hope you enjoy it and happy hunting.
   
