@@ -33,7 +33,6 @@ Externum requires a few packages to be installed on your system in order to work
 | Fuff      | (https://github.com/ffuf/ffuf) |
 | GoWitness | (https://github.com/sensepost/gowitness) |
 | Rush      | (https://github.com/shenwei356/rush) |
-|           ||
 | Nikto     | sudo apt-get install nikto (From Debian based system) |
 | Nmap      | sudo apt-get install nmap (From Debian based system) |
 
