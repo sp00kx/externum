@@ -167,7 +167,7 @@ quickenum() {
     echo -e "${blue}Busting some directories and looking for codes: ${colouroff}"
     if ! command -v dirsearch &>/dev/null; then
         banner
-        echo -e ${red}"Badtimes! You need Dirsearch installed for Externum to work"${colouroff}
+        echo -e ${red}"Badtimes! You need ffuf installed for Externum to work"${colouroff}
         exit
     else
         if [[ "$wordlist" == "" ]]; then
