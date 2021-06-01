@@ -9,7 +9,7 @@ A framework written in Bash designed to help automate and increase efficiency wh
 
 # Information:
 -------------
-This is my first venture into creating a framework to try and increase efficiency by automating some of the more laborious recon and enumeration tasks of an external penetration test. I realise that there are many programs out there that will do significantly more than this this program, but this is in line with my personal methodology.
+This is my first venture into creating a framework to try and increase efficiency by automating some of the more laborious recon and enumeration tasks of an external penetration test. I realise that there are many programs out there that will do significantly more than this program, but this is in line with my personal methodology.
 
 To coin a phrase from the film Full Metal Jacket: "This is my program. There are many like it, but this one is mine"
 
