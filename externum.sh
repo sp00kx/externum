@@ -23,22 +23,22 @@ usage () {
     echo
     echo -e "${blue}Description:${colouroff}"
     echo "This tool is designed to assit a penetration tester with an external test"
-    echo "by automating some of the more labourious tasks of intial informaiton"
+    echo "by automating some of the more laborious tasks of initial information"
     echo "gathering and enumeration."
     echo
     echo "The tool will initially discover hostnames associated to the target IP's"
     echo "then perform some subdomain enumeration before morning on to trying to"
     echo "identify some quick wins."
     echo
-    echo "Once this is compelte it should give you enough informaiton to get on with"
+    echo "Once this is complete it should give you enough information to get on with"
     echo "some manual testing. Whilst this is happening Externum will be carrying out"
-    echo "a full scann of the target IP's to find all open/closed ports and services"
+    echo "a full scan of the target IP's to find all open/closed ports and services"
     echo
     echo -e "${blue}Usage:${colouroff}"
-    echo "Due to cetain commands Externum is designed to be run as root"
+    echo "Due to certain commands Externum is designed to be run as root"
     echo
     echo " -t   Path to targets file (Required)"
-    echo " -w   Path to wordslist for directory enumeration (Required)"
+    echo " -w   Path to wordlist for directory enumeration (Required)"
     echo " -o   Enables OSINT plugin that looks for hostnames & enumerates subdomains (Optional)"
     echo " -h   Show this usage message"
     echo
