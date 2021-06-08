@@ -41,7 +41,7 @@ NOTE: I would just like to give thanks to the makers of the above applications t
 ### Usage:
 ---------
 
-**Externum has three positional arguments as follows:**
+**Externum has four positional arguments as follows:**
 
 | Argument | Status    | Description |
 |:---------|:----------|:------------|
