@@ -47,7 +47,8 @@ NOTE: I would just like to give thanks to the makers of the above applications t
 |:---------|:----------|:------------|
 |   -o     | OPTIONAL  | Enables the OSINT recon section of the framework. All IP's will be checked against the ipinfo.io api returning associated hostnames. These hostnames will then be sent to amass where all subdomains will be enumerated. |
 |   -t     | REQUIRED  | Path to your target file that contains a list of IP's (One per line) |
-|   -w     | REQUIRED  | Path to your chosen wordlist | 
+|   -w     | REQUIRED  | Path to your chosen wordlist |
+|   -h     | Help      |
 
 NOTE: The nmap scans will require root privileges so it's best to run Externum elevated from the start, although you will be prompted if you forget.
 
@@ -62,4 +63,4 @@ Adding support and custom templates for Nuclei
 
 Adding additional OSINT features
 
-
+Adding automated network envrionment detection for nmap timing and performance switches
