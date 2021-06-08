@@ -59,4 +59,7 @@ sudo ./externum.sh -o -t <PATH TO TARGET FILE> -w <PATH TO WORDLIST>
 ### Future Improvements:
 ---
 Adding support and custom templates for Nuclei
+
 Adding additional OSINT features
+
+
