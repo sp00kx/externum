@@ -1,0 +1,8 @@
+# CHANGE LOG
+
+05/07/2021
+    Stopped the banner from flashing
+    replaced dirsearch with ffuf
+    replaced dynamic folder creation with static.
+    sorted some spelling errors
+    reduced tcp nmap port scan to top 1000 from 65535 to enhance performance
